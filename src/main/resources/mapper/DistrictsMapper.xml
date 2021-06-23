@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.address.crawling.mapper.DistrictsMapper">
+    <insert id="insert" >
+        insert into `districts` (`code`, `name`, `parent_id`, `level`) values
+        <foreach collection="list" separator="," item="district">
+            (#{district.code}, #{district.name}, #{district.parentId}, #{district.level})
+        </foreach>
+    </insert>
+
+    <delete id="deleteAll">
+        delete from `district`
+    </delete>
+
+</mapper>

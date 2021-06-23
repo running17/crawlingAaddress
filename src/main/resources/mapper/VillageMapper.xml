@@ -1,0 +1,25 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.address.crawling.mapper.VillageMapper">
+    <insert id="insert" >
+        insert into `village` (`code`, `name`, `town_code`, `type_code`) values
+        <foreach collection="list" separator="," item="village">
+            (#{village.code}, #{village.name}, #{village.townCode}, #{village.typeCode})
+        </foreach>
+    </insert>
+
+    <delete id="deleteAll">
+        delete from `village`
+    </delete>
+
+    <select id="selectAll" resultType="com.address.crawling.entity.Village">
+        select `id`,`code`, `name`, `town_code` as townCode, `type_code` as typeCode
+        from `village`
+        order by `id` asc
+    </select>
+
+    <delete id="deleteByTownCode">
+        delete from `village` where `town_code` = #{townCode}
+    </delete>
+</mapper>

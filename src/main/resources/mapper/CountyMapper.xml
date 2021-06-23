@@ -1,0 +1,21 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.address.crawling.mapper.CountyMapper">
+    <insert id="insert" >
+        insert into `county` (`code`, `name`, `path`, `city_code`) values
+        <foreach collection="list" separator="," item="county">
+            (#{county.code}, #{county.name}, #{county.path}, #{county.cityCode})
+        </foreach>
+    </insert>
+
+    <delete id="deleteAll">
+        delete from `county`
+    </delete>
+
+    <select id="selectAll" resultType="com.address.crawling.entity.County">
+        select `id`,`code`, `name`, `path`, `city_code` as cityCode
+        from `county`
+        order by `id` asc
+    </select>
+</mapper>
