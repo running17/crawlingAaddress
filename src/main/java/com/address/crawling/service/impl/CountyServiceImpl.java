@@ -6,9 +6,7 @@ import com.address.crawling.service.CountyService;
 import com.address.crawling.constant.Constant;
 import com.address.crawling.entity.City;
 import com.address.crawling.mapper.CityMapper;
-import org.jsoup.Jsoup;
-import org.jsoup.nodes.Document;
-import org.jsoup.nodes.Element;
+import com.address.crawling.utils.JsoupUtils;
 import org.jsoup.select.Elements;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
@@ -27,48 +25,43 @@ public class CountyServiceImpl implements CountyService {
     @Autowired
     CountyMapper countyMapper;
 
-    @Override
-    public void crawlingCountyData() {
+    public void crawlingCountyData(List<City> cities) {
         List<County> counties = new ArrayList<>();
-
-        List<City> cities = cityMapper.selectAll();
+        if(CollectionUtils.isEmpty(cities)){
+            cities = cityMapper.selectAll();
+        }
+        List<City> errors = new ArrayList<>();
         for(City city : cities){
             final String cityCode = city.getCode();
             final String countyUrl = city.getPath();
             String urlPre = countyUrl.substring(0, countyUrl.lastIndexOf(Constant.URL_SEPARATOR) + 1);
             try {
-                Document document = Jsoup.connect(countyUrl).get();
-                Elements elements = document.getElementsByClass(Constant.COUNTY_CLASS_NAME);
+                Elements elements = JsoupUtils.getDataElements(countyUrl, Constant.COUNTY_CLASS_NAME);
                 elements.forEach(element -> {
                     Elements tds = element.getElementsByTag(Constant.TD);
                     County county = new County();
                     county.setCityCode(cityCode);
-                    Elements codeAs = tds.get(0).getElementsByTag(Constant.A);
-                    if(codeAs.isEmpty()){
-                        county.setCode(tds.get(0).text());
-                    }else{
-                        Element codeA = codeAs.get(0);
-                        county.setCode(codeA.text());
-                    }
-
-
-                    Elements nameAs = tds.get(1).getElementsByTag(Constant.A);
-                    if(nameAs.isEmpty()){
-                        county.setName(tds.get(1).text());
-                    }else{
-                        Element nameA = nameAs.get(0);
-                        county.setName(nameA.text());
-                        county.setPath(urlPre + nameA.attr(Constant.HREF));
-                    }
+                    JsoupUtils.buildCodeByTdElement(tds.get(0), county);
+                    JsoupUtils.buildNameAndPathByTdElement(tds.get(1), county, urlPre);
                     counties.add(county);
                 });
             } catch (IOException e) {
                 e.printStackTrace();
+                errors.add(city);
             }
         }
-        countyMapper.deleteAll();
         if(!CollectionUtils.isEmpty(counties)){
             countyMapper.insert(counties);
         }
+        if(!CollectionUtils.isEmpty(errors)){
+            countyMapper.deleteByCity(errors);
+            crawlingCountyData(errors);
+        }
+    }
+
+    @Override
+    public void crawlingCountyData(){
+        countyMapper.deleteAll();
+        crawlingCountyData(null);
     }
 }

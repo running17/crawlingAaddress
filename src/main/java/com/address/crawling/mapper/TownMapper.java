@@ -1,5 +1,6 @@
 package com.address.crawling.mapper;
 
+import com.address.crawling.entity.County;
 import com.address.crawling.entity.Town;
 import org.apache.ibatis.annotations.Mapper;
 import org.apache.ibatis.annotations.Param;
@@ -15,4 +16,5 @@ public interface TownMapper {
 
     List<Town> selectAll();
 
+    void deleteByCountys(@Param("list")List<County> errors);
 }

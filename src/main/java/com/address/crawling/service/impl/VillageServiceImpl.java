@@ -6,8 +6,7 @@ import com.address.crawling.entity.Village;
 import com.address.crawling.mapper.TownMapper;
 import com.address.crawling.mapper.VillageMapper;
 import com.address.crawling.service.VillageService;
-import org.jsoup.Jsoup;
-import org.jsoup.nodes.Document;
+import com.address.crawling.utils.JsoupUtils;
 import org.jsoup.select.Elements;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
@@ -26,17 +25,17 @@ public class VillageServiceImpl implements VillageService {
     @Autowired
     TownMapper townMapper;
 
-
-    @Override
-    public void crawlingVillageData() {
+    public void crawlingVillageData(List<Town> towns) {
         List<Village> villages = new ArrayList<>();
-        List<Town> towns = townMapper.selectAll();
+        if(CollectionUtils.isEmpty(towns)){
+            towns = townMapper.selectAll();
+        }
+        List<Town> errors = new ArrayList<>();
         for(Town town : towns){
             final String townCode = town.getCode();
             final String townUrl = town.getPath();
             try {
-                Document document = Jsoup.connect(townUrl).get();
-                Elements elements = document.getElementsByClass(Constant.VILLAGE_CLASS_NAME);
+                Elements elements = JsoupUtils.getDataElements(townUrl, Constant.VILLAGE_CLASS_NAME);
                 elements.forEach(element -> {
                     Elements tds = element.getElementsByTag(Constant.TD);
                     Village village = new Village();
@@ -49,6 +48,7 @@ public class VillageServiceImpl implements VillageService {
             } catch (IOException e) {
                 e.printStackTrace();
                 System.out.println("出错url" + townUrl);
+                errors.add(town);
             }
             villageMapper.deleteByTownCode(townCode);
             if(!CollectionUtils.isEmpty(villages)){
@@ -57,5 +57,14 @@ public class VillageServiceImpl implements VillageService {
             }
         }
 
+        if(!CollectionUtils.isEmpty(errors)){
+            crawlingVillageData(errors);
+        }
+
+    }
+
+    @Override
+    public void crawlingVillageData() {
+        crawlingVillageData(null);
     }
 }

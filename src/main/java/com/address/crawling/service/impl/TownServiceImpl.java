@@ -6,6 +6,7 @@ import com.address.crawling.entity.Town;
 import com.address.crawling.mapper.CountyMapper;
 import com.address.crawling.mapper.TownMapper;
 import com.address.crawling.service.TownService;
+import com.address.crawling.utils.JsoupUtils;
 import org.jsoup.Jsoup;
 import org.jsoup.nodes.Document;
 import org.jsoup.nodes.Element;
@@ -28,11 +29,12 @@ public class TownServiceImpl implements TownService {
     @Autowired
     TownMapper townMapper;
 
-    @Override
-    public void crawlingTownData() {
+    public void crawlingTownData(List<County> counties) {
         List<Town> towns = new ArrayList<>();
-
-        List<County> counties = countyMapper.selectAll();
+        if(CollectionUtils.isEmpty(counties)){
+            counties = countyMapper.selectAll();
+        }
+        List<County> errors = new ArrayList<>();
         for(County county : counties){
             final String countyCode = county.getCode();
             final String townUrl = county.getPath();
@@ -42,30 +44,33 @@ public class TownServiceImpl implements TownService {
             }
             String urlPre = townUrl.substring(0, townUrl.lastIndexOf(Constant.URL_SEPARATOR) + 1);
             try {
-                Document document = Jsoup.connect(townUrl).get();
-                Elements elements = document.getElementsByClass(Constant.TOWN_CLASS_NAME);
+                Elements elements = JsoupUtils.getDataElements(townUrl, Constant.TOWN_CLASS_NAME);
                 elements.forEach(element -> {
                     Elements tds = element.getElementsByTag(Constant.TD);
                     Town town = new Town();
                     town.setCountyCode(countyCode);
-                    Elements codeAs = tds.get(0).getElementsByTag(Constant.A);
-                    Element codeA = codeAs.get(0);
-                    town.setCode(codeA.text());
-
-                    Elements nameAs = tds.get(1).getElementsByTag(Constant.A);
-                    Element nameA = nameAs.get(0);
-                    town.setName(nameA.text());
-                    town.setPath(urlPre + nameA.attr(Constant.HREF));
+                    JsoupUtils.buildCodeByTdElement(tds.get(0), town);
+                    JsoupUtils.buildNameAndPathByTdElement(tds.get(1), town, urlPre);
                     towns.add(town);
                 });
             } catch (IOException e) {
                 e.printStackTrace();
+                errors.add(county);
             }
 
         }
-        townMapper.deleteAll();
         if(!CollectionUtils.isEmpty(towns)){
             townMapper.insert(towns);
         }
+        if(!CollectionUtils.isEmpty(errors)){
+            townMapper.deleteByCountys(errors);
+            crawlingTownData(errors);
+        }
+    }
+
+    @Override
+    public void crawlingTownData() {
+        townMapper.deleteAll();
+        crawlingTownData(null);
     }
 }

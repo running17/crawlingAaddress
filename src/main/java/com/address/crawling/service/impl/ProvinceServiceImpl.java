@@ -4,6 +4,7 @@ import com.address.crawling.constant.Constant;
 import com.address.crawling.entity.Province;
 import com.address.crawling.mapper.ProvinceMapper;
 import com.address.crawling.service.ProvinceService;
+import com.address.crawling.utils.JsoupUtils;
 import org.jsoup.Jsoup;
 import org.jsoup.nodes.Document;
 import org.jsoup.select.Elements;
@@ -25,8 +26,7 @@ public class ProvinceServiceImpl implements ProvinceService {
     public void crawlingProvinceData() {
         List<Province> provinces = new ArrayList<>();
         try {
-            Document document = Jsoup.connect(Constant.INDEX_URL).get();
-            Elements elements = document.getElementsByClass(Constant.PROVINCE_CLASS_NAME);
+            Elements elements = JsoupUtils.getDataElements(Constant.INDEX_URL, Constant.PROVINCE_CLASS_NAME);
             String pathPre = Constant.INDEX_URL_PRE;
             elements.forEach(element -> {
                 Elements aes = element.getElementsByTag(Constant.A);

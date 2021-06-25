@@ -58,23 +58,29 @@ class AddressApplicationTests {
 
     @Test
     void addressLoads(){
+        System.out.println("---省份数据");
         provinceLoads();
         sleep();
+        System.out.println("---城市数据");
         cityLoads();
         sleep();
+        System.out.println("---县区数据");
         countyLoads();
         sleep();
+        System.out.println("---乡镇数据");
         townLoads();
         sleep();
+        System.out.println("---村委会数据");
         villageLoads();
+        System.out.println("---组装区域");
         districtLoads();
     }
 
     private void sleep(){
-        try {
-            Thread.sleep(5000);
-        } catch (InterruptedException e) {
-            e.printStackTrace();
-        }
+//        try {
+//            Thread.sleep(5000);
+//        } catch (InterruptedException e) {
+//            e.printStackTrace();
+//        }
     }
 }

@@ -1,6 +1,7 @@
 package com.address.crawling.mapper;
 
 import com.address.crawling.entity.City;
+import com.address.crawling.entity.Province;
 import org.apache.ibatis.annotations.Mapper;
 import org.apache.ibatis.annotations.Param;
 
@@ -15,4 +16,5 @@ public interface CityMapper {
 
     List<City> selectAll();
 
+    void deleteAllByProvinces(@Param("list")List<Province> errors);
 }

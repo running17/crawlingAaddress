@@ -6,9 +6,7 @@ import com.address.crawling.entity.Province;
 import com.address.crawling.mapper.CityMapper;
 import com.address.crawling.mapper.ProvinceMapper;
 import com.address.crawling.service.CityService;
-import org.jsoup.Jsoup;
-import org.jsoup.nodes.Document;
-import org.jsoup.nodes.Element;
+import com.address.crawling.utils.JsoupUtils;
 import org.jsoup.select.Elements;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
@@ -27,41 +25,42 @@ public class CityServiceImpl implements CityService {
     @Autowired
     CityMapper cityMapper;
 
-    @Override
-    public void crawlingCityData() {
-        List<Province> provinceList = provinceMapper.selectAll();
+    public void crawlingCityData(List<Province> provinceList) {
         if(CollectionUtils.isEmpty(provinceList)){
-            return;
+            provinceList = provinceMapper.selectAll();
         }
         List<City> cities = new ArrayList<>();
+        List<Province> errors = new ArrayList<>();
         for(Province province : provinceList){
             final String provinceCode = province.getCode();
             final String cityUrl = province.getPath();
             try {
-                Document document = Jsoup.connect(cityUrl).get();
-                Elements elements = document.getElementsByClass(Constant.CITY_CLASS_NAME);
+                Elements elements = JsoupUtils.getDataElements(cityUrl, Constant.CITY_CLASS_NAME);
                 elements.forEach(element -> {
                     Elements tds = element.getElementsByTag(Constant.TD);
                     City city = new City();
                     city.setProvinceCode(provinceCode);
-                    Elements codeAs = tds.get(0).getElementsByTag(Constant.A);
-                    Element codeA = codeAs.get(0);
-                    city.setCode(codeA.text());
-
-                    Elements nameAs = tds.get(1).getElementsByTag(Constant.A);
-                    Element nameA = nameAs.get(0);
-                    city.setName(nameA.text());
-                    city.setPath(Constant.INDEX_URL_PRE + nameA.attr(Constant.HREF));
+                    JsoupUtils.buildCodeByTdElement(tds.get(0), city);
+                    JsoupUtils.buildNameAndPathByTdElement(tds.get(1), city, Constant.INDEX_URL_PRE);
                     cities.add(city);
                 });
             } catch (IOException e) {
                 e.printStackTrace();
+                errors.add(province);
             }
         }
-
-        cityMapper.deleteAll();
         if(!CollectionUtils.isEmpty(cities)){
             cityMapper.insert(cities);
         }
+        if(!CollectionUtils.isEmpty(errors)){
+            cityMapper.deleteAllByProvinces(errors);
+            crawlingCityData(errors);
+        }
+    }
+
+    @Override
+    public void crawlingCityData() {
+        cityMapper.deleteAll();
+        crawlingCityData(null);
     }
 }

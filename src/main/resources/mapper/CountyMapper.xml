@@ -18,4 +18,10 @@
         from `county`
         order by `id` asc
     </select>
+
+    <delete id="deleteByCity">
+        delete from `county` where `city_code` in <foreach collection="list" separator="," item="c" close=")" open="(">
+        #{c.code}
+    </foreach>
+    </delete>
 </mapper>

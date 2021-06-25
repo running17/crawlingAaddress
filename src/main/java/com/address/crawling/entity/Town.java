@@ -14,16 +14,11 @@ import lombok.experimental.SuperBuilder;
 @SuperBuilder(toBuilder = true)
 @NoArgsConstructor
 @AllArgsConstructor
-public class Town extends BaseEntity {
+public class Town extends Province {
 
     /**
      * 区县编码
      */
     private String countyCode;
-
-    /**
-     * 下级地址
-     */
-    private String path;
 
 }
